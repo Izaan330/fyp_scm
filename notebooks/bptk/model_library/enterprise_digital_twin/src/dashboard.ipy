@@ -1,0 +1,515 @@
+%matplotlib inline
+import matplotlib.pyplot as plt
+from ipywidgets import interact, HBox, VBox, Text, FloatSlider, Tab, Button, HTML, Layout, Label, Dropdown, Output, Accordion
+
+
+def update_plots():
+    interactive_scenario.reset_cache()
+    bptk.run_scenarios(scenario_managers=["smEDT"],scenarios=["interactive"],agents=["controlling"],agent_states=["active"],agent_properties=["projects"],agent_property_types=["total"]) #run scenario to ensure all follow-on projects are created
+    with timeline:
+        plt.ioff
+        timeline.clear_output(wait=True)
+        project_names=[]
+        project_start_times=[]
+        project_durations=[]
+        colors=[]
+
+        for id in interactive_scenario.agent_ids(agent_type='project'):
+            project_names.append(interactive_scenario.agent(id).name)
+            project_start_times.append(interactive_scenario.agent(id).start_time)
+            project_durations.append(min(interactive_scenario.agent(id).deadline,interactive_scenario.stoptime)-interactive_scenario.agent(id).start_time)
+            colors.append('#99bbc7')
+        
+
+        plt.barh(y=project_names,width=project_durations,left=project_start_times,color=colors)
+        plt.show()
+        plt.ion()
+        
+    with capacityDemandTab:
+        plt.ioff()
+        capacityDemandTab.clear_output(wait=True)
+        bptk.plot_scenarios(
+            scenario_managers=["smEDT"],
+            kind="area",
+            scenarios=["interactive"],
+            title="Capacity vs Demand",
+            agents=["controlling"],
+            agent_states=["active"],
+            agent_properties=["consultant_demand","consultant_capacity_fte"],
+            agent_property_types=["total"],
+            series_names={
+                "smEDT_interactive_controlling_active_consultant_demand_total" : "Consultant Demand",
+                "smEDT_interactive_controlling_active_consultant_capacity_fte_total" : "Consultant Capacity"
+            }
+        )
+        plt.show()
+        plt.ion()
+
+    with utilizationTab:
+        plt.ioff()
+        utilizationTab.clear_output()
+        bptk.plot_scenarios(
+            scenario_managers=["smEDT"],
+            kind="area",
+            scenarios=["interactive"],
+            title="Utilization Rate",
+            agents=["controlling"],
+            agent_states=["active"],
+            agent_properties=["avg_utilization","overall_avg_utilization"],
+            agent_property_types=["total"],
+            series_names={
+                "smEDT_interactive_controlling_active_avg_utilization_total" : "Utilization Rate (Monthly)",
+                "smEDT_interactive_controlling_active_overall_avg_utilization_total" : "Utilization Rate (To Date)"
+            }
+        )
+        plt.show()
+        plt.ion()
+
+    with profitMarginTab:
+        plt.ioff()
+        profitMarginTab.clear_output()
+        bptk.plot_scenarios(
+            scenario_managers=["smEDT"],
+            kind="area",
+            scenarios=["interactive"],
+            title="Profit Margin",
+            agents=["controlling"],
+            agent_states=["active"],
+            agent_properties=["profit_margin","overall_profit_margin"],
+            agent_property_types=["total"],
+            series_names={
+              "smEDT_interactive_controlling_active_profit_margin_total" : "Profit Margin (Monthly)",
+             "smEDT_interactive_controlling_active_overall_profit_margin_total" : "Profit Margin (To Date)"
+             }
+        )
+        plt.show()
+        plt.ion()
+
+    with dailyRatesTab:
+        plt.ioff()
+        dailyRatesTab.clear_output()
+        bptk.plot_scenarios(
+            scenario_managers=["smEDT"],
+            kind="area",
+            scenarios=["interactive"],
+            title="Consulting Fees (Daily Rate)",
+            agents=["controlling"],
+            agent_states=["active"],
+            agent_properties=["avg_consulting_fee","overall_avg_consulting_fee"],
+            agent_property_types=["total"],
+            series_names={
+         "smEDT_interactive_controlling_active_avg_consulting_fee_total" : "Avg. Consulting Fee (Monthly)",
+        "smEDT_interactive_controlling_active_overall_avg_consulting_fee_total" : "Avg. Consulting Fee (To Date)"
+     }  
+        )
+        plt.show()
+        plt.ion()
+
+    with cashTab:
+        plt.ioff()
+        cashTab.clear_output()
+        bptk.plot_scenarios(
+            scenario_managers=["smEDT"],
+            kind="area",
+            scenarios=["interactive"],
+            title="Cash and Cash Flow",
+            agents=["controlling"],
+            agent_states=["active"],
+            agent_properties=["cash","cash_flow"],
+            agent_property_types=["total"],
+            series_names={
+         "smEDT_interactive_controlling_active_cash_total" : "Cash",
+        "smEDT_interactive_controlling_active_cash_flow_total" : "Cash Flow"
+     }
+        )
+        plt.show()
+        plt.ion()
+
+    with earningsTab:
+        plt.ioff()
+        earningsTab.clear_output()
+        bptk.plot_scenarios(
+            scenario_managers=["smEDT"],
+            kind="area",
+            scenarios=["interactive"],
+            title="Earnings (Monthly)",
+            agents=["controlling"],
+            agent_states=["active"],
+            agent_properties=["earnings","revenue","expenses"],
+            agent_property_types=["total"],
+                   series_names={
+         "smEDT_interactive_controlling_active_earnings_total" : "Earnings",
+         "smEDT_interactive_controlling_active_revenue_total" : "Revenue",
+        "smEDT_interactive_controlling_active_expenses_total" : "Expenses",
+     }
+        )
+        plt.show()
+        plt.ion()
+
+    with revenueRiskTab:
+        plt.ioff()
+        revenueRiskTab.clear_output()
+        bptk.plot_scenarios(
+            scenario_managers=["smEDT"],
+            kind="area",
+            scenarios=["interactive"],
+            title="Revenue Risk",
+            agents=["controlling"],
+            agent_states=["active"],
+            agent_properties=["revenue_risk"],
+            agent_property_types=["total"],
+                   series_names={
+         "smEDT_interactive_controlling_active_revenue_risk_total" : "Revenue Risk"
+     }
+        )
+        plt.show()
+        plt.ion()
+
+    with earningsStatbox:
+        earningsStatbox.clear_output()
+        df=bptk.run_scenarios(
+             scenario_managers=["smEDT"],
+            scenarios=["interactive"],
+            agents=["controlling"],
+            agent_states=["active"],
+            agent_properties=["accumulated_earnings"],
+            agent_property_types=["total"]
+                 
+        )
+        
+        display(HTML(value="<div style='padding:10px;background-color:#99d5d5'><h3>Earnings</h3><h1>€ {}</h1></div>".format(round(df.iloc[-1,0]))))
+
+    with revenueStatbox:
+        revenueStatbox.clear_output()
+        df=bptk.run_scenarios(
+             scenario_managers=["smEDT"],
+            scenarios=["interactive"],
+            agents=["controlling"],
+            agent_states=["active"],
+            agent_properties=["accumulated_revenue"],
+            agent_property_types=["total"]
+                 
+        )
+        
+        display(HTML(value="<div style='padding:10px;background-color:#99d5d5'><h3>Revenue</h3><h1>€ {}</h1></div>".format(round(df.iloc[-1,0]))))
+
+    with profitMarginStatbox:
+        profitMarginStatbox.clear_output()
+        df=bptk.run_scenarios(
+             scenario_managers=["smEDT"],
+            scenarios=["interactive"],
+            agents=["controlling"],
+            agent_states=["active"],
+            agent_properties=["overall_profit_margin"],
+            agent_property_types=["total"]
+                 
+        )
+        
+        display(HTML(value="<div style='padding:10px;background-color:#99d5d5'><h3>Profit Margin</h3><h1>{}%</h1></div>".format(round(df.iloc[-1,0]*100.0))))
+
+    with utilizationStatbox:
+        utilizationStatbox.clear_output()
+        df=bptk.run_scenarios(
+             scenario_managers=["smEDT"],
+            scenarios=["interactive"],
+            agents=["controlling"],
+            agent_states=["active"],
+            agent_properties=["overall_avg_utilization"],
+            agent_property_types=["total"]
+          
+                 
+        )
+        display(HTML(value="<div style='padding:10px;background-color:#99d5d5'><h3>Utilization</h3><h1>{}%</h1></div>".format(round(df.iloc[-1,0]*100.0))))
+
+    with dailyRateStatbox:
+        dailyRateStatbox.clear_output()
+        df=bptk.run_scenarios(
+             scenario_managers=["smEDT"],
+            scenarios=["interactive"],
+            agents=["controlling"],
+            agent_states=["active"],
+            agent_properties=["overall_avg_consulting_fee"],
+            agent_property_types=["total"]
+          
+                 
+        )
+        display(HTML(value="<div style='padding:10px;background-color:#99d5d5'><h3>Daily Rate</h3><h1>€ {}</h1></div>".format(round(df.iloc[-1,0]))))
+        
+        
+
+interactive_scenario = bptk.get_scenario("smEDT","interactive")
+
+# projects
+
+project_ids = interactive_scenario.agent_ids(agent_type="project")
+project_tuples = []
+
+for id in project_ids:
+    project_tuples.append((interactive_scenario.agent(id).name,id))
+
+project_dropdown = Dropdown(
+    options=project_tuples,
+    value=project_ids[0],
+    disabled=False
+)
+
+# project variables
+
+project_name_text = Text(value=project_tuples[0][0])
+project_consultants_slider = FloatSlider(value=interactive_scenario.agent(project_tuples[0][1]).consultants,min=1.0,max=10.0,step=1.0,continuous_update=False)
+
+project_contracted_effort_slider = FloatSlider(value=interactive_scenario.agent(project_tuples[0][1]).contracted_effort,min=1.0, max=144.0,step=1.0,continuous_update=False)
+project_contracted_probability_slider = FloatSlider(value=interactive_scenario.agent(project_tuples[0][1]).contracted_probability,min=0.0, max=1.0,step=0.01,continuous_update=False)
+
+project_extension_effort_slider = FloatSlider(value=interactive_scenario.agent(project_tuples[0][1]).extension_effort,min=1.0, max=144.0,step=1.0,continuous_update=False)
+project_extension_probability_slider = FloatSlider(value=interactive_scenario.agent(project_tuples[0][1]).extension_probability,min=0.0, max=1.0,step=0.01,continuous_update=False)
+
+project_follow_on_probability_slider = FloatSlider(value=interactive_scenario.agent(project_tuples[0][1]).follow_on_probability,min=0.0, max=1.0,step=0.01,continuous_update=False)
+
+project_start_time_slider = FloatSlider(value=interactive_scenario.agent(project_tuples[0][1]).start_time,min=1.0, max=25.0,step=1.0,continuous_update=False)
+project_deadline_slider = FloatSlider(value=interactive_scenario.agent(project_tuples[0][1]).deadline,min=1.0, max=26.0,step=1.0,continuous_update=False)
+
+project_billing_rate_slider = FloatSlider(value=interactive_scenario.agent(project_tuples[0][1]).billing_rate/18.0,min=500.0, max=2000.0,step=100.0,continuous_update=False)
+
+# project event handlers
+def on_project_dropdown_select(change):
+    # change["new"] is the agent_id
+    id=change["new"]
+    project_name_text.value = interactive_scenario.agent(id).name
+    project_consultants_slider.value = interactive_scenario.agent(id).consultants
+    project_contracted_effort_slider.value = interactive_scenario.agent(id).contracted_effort
+    project_contracted_probability_slider.value = interactive_scenario.agent(id).contracted_probability
+    project_extension_effort_slider.value = interactive_scenario.agent(id).extension_effort
+    project_extension_probability_slider.value = interactive_scenario.agent(id).extension_probability
+    project_follow_on_probability_slider.value = interactive_scenario.agent(id).follow_on_probability 
+    project_start_time_slider.value = interactive_scenario.agent(id).start_time
+    project_deadline_slider.value = interactive_scenario.agent(id).deadline
+    project_billing_rate_slider.value = interactive_scenario.agent(id).billing_rate/18.0
+
+def on_project_name_change(change):
+    interactive_scenario.agent(project_dropdown.value).name=change["new"]
+
+def on_project_start_time_change(change):
+    interactive_scenario.agent(project_dropdown.value).start_time=change["new"]
+
+def on_project_deadline_change(change):
+    interactive_scenario.agent(project_dropdown.value).deadline=change["new"]
+
+def on_project_billing_rate_change(change):
+    interactive_scenario.agent(project_dropdown.value).billing_rate=change["new"]*18.0
+
+def on_project_consultants_change(change):
+    interactive_scenario.agent(project_dropdown.value).consultants=change["new"]
+
+def on_project_contracted_effort_change(change):
+    interactive_scenario.agent(project_dropdown.value).contracted_effort=change["new"]
+
+def on_project_contracted_probability_change(change):
+    interactive_scenario.agent(project_dropdown.value).contracted_probability=change["new"]
+
+def on_project_extension_effort_change(change):
+    interactive_scenario.agent(project_dropdown.value).extension_effort=change["new"]
+
+def on_project_extension_probability_change(change):
+    interactive_scenario.agent(project_dropdown.value).extension_probability=change["new"]
+
+def on_project_follow_on_probability_change(change):
+    interactive_scenario.agent(project_dropdown.value).follow_on_probability=change["new"]
+
+project_dropdown.observe(on_project_dropdown_select,names="value")
+project_name_text.observe(on_project_name_change,names="value")
+project_start_time_slider.observe(on_project_start_time_change,names="value")
+project_deadline_slider.observe(on_project_deadline_change,names="value")
+project_billing_rate_slider.observe(on_project_billing_rate_change,names="value")
+project_consultants_slider.observe(on_project_consultants_change,names="value")
+project_contracted_effort_slider.observe(on_project_contracted_effort_change,names="value")
+project_contracted_probability_slider.observe(on_project_contracted_probability_change,names="value")
+project_extension_effort_slider.observe(on_project_extension_effort_change,names="value")
+project_extension_probability_slider.observe(on_project_extension_probability_change,names="value")
+project_follow_on_probability_slider.observe(on_project_follow_on_probability_change,names="value")
+
+# consultants
+
+consultant_ids=interactive_scenario.agent_ids(agent_type="consultant")
+consultant_tuples=[]
+
+for id in consultant_ids:
+    consultant_tuples.append((interactive_scenario.agent(id).name,id))
+
+consultant_dropdown = Dropdown(
+    options=consultant_tuples,
+    value=consultant_ids[0],
+    disabled=False
+)
+
+consultant_name_text = Text(value=consultant_tuples[0][0])
+consultant_salary_slider = FloatSlider(value=interactive_scenario.agent(consultant_tuples[0][1]).salary,min=1.0,max=10000.0,step=1.0,continuous_update=False)
+
+# consultant event handlers
+def on_consultant_dropdown_select(change):
+    # change["new"] is the agent_id
+    id=change["new"]
+    consultant_name_text.value=interactive_scenario.agent(id).name
+    consultant_salary_slider.value=interactive_scenario.agent(id).salary
+
+def on_consultant_name_change(change):
+    interactive_scenario.agent(consultant_dropdown.value).name=change["new"]
+
+def on_consultant_salary_change(change):
+    interactive_scenario.agent(consultant_dropdown.value).salary=change["new"]
+
+consultant_dropdown.observe(on_consultant_dropdown_select,names="value")
+consultant_name_text.observe(on_consultant_name_change,names="value")
+consultant_salary_slider.observe(on_consultant_salary_change,names="value")
+
+# overall scenario settings
+
+## scenario settings widgets
+
+scenario_fixed_cost_slider = FloatSlider(value=interactive_scenario.fixed_cost,min=0.0,max=200000.0,step=10000.0,continuous_update=False)
+scenario_revenue_risk_level_slider = FloatSlider(value=interactive_scenario.revenue_risk_level,min=0.0,max=1.0,step=0.01,continuous_update=False)
+
+## scenario settings event handlers
+
+def on_scenario_fixed_cost_change(change):
+    interactive_scenario.fixed_cost = change["new"]
+
+def on_scenario_revenue_risk_level_change(change):
+    interactive_scenario.revenue_risk_level = change["new"]
+
+## attach handlers to widgets
+
+scenario_fixed_cost_slider.observe(on_scenario_fixed_cost_change,names="value")
+scenario_revenue_risk_level_slider.observe(on_scenario_revenue_risk_level_change,names="value")
+
+# dashboard layout
+
+## settings
+
+scenarioBox = HBox(children=[
+    VBox(children=[
+        Label('Fixed Cost'),
+        Label('Revenue Risk Level')
+    ]),
+    VBox(children=[
+        scenario_fixed_cost_slider,
+        scenario_revenue_risk_level_slider
+    ])
+])
+
+
+projectsBox = HBox(children=[
+    VBox(
+        children=[
+            Label('Project'),
+            Label('Name'),
+            Label('Consultants'),
+            Label('Start Time'),
+            Label('Deadline'),
+            Label('Billing Rate'),
+            Label('Contracted Effort'),
+            Label('Contracted Probability'),
+            Label('Extension Effort'),
+            Label('Extension Probability'),
+            Label('Follow On Probability')
+
+        ]
+    ),
+    VBox(
+    children=[
+        project_dropdown,
+        project_name_text,
+        project_consultants_slider,
+        project_start_time_slider,
+        project_deadline_slider,
+        project_billing_rate_slider,
+        project_contracted_effort_slider,
+        project_contracted_probability_slider,
+        project_extension_effort_slider,
+        project_extension_probability_slider,
+        project_follow_on_probability_slider
+       
+    ]
+)])
+
+
+consultantsBox = HBox(children=[
+    VBox(
+    children=[
+        Label("Consultant"),
+        Label("Name"),
+        Label("Salary")
+    ]),
+    VBox(
+    children=[
+        consultant_dropdown,
+        consultant_name_text,
+        consultant_salary_slider
+    ]
+    )])
+
+## timeline
+
+timeline = Output()
+
+## kpi overall values
+
+utilizationStatbox = Output(layout=Layout(width='20%',margin='5px'))
+dailyRateStatbox = Output(layout=Layout(width='20%',margin='5px'))
+revenueStatbox = Output(layout=Layout(width='20%',margin='5px'))
+earningsStatbox = Output(layout=Layout(width='20%',margin='5px'))
+profitMarginStatbox = Output(layout=Layout(width='20%',margin='5px'))
+## kpi charts
+
+capacityDemandTab = Output()
+utilizationTab = Output()
+profitMarginTab = Output()
+dailyRatesTab = Output()
+cashTab = Output()
+earningsTab = Output()
+revenueRiskTab = Output()
+
+
+
+
+
+kpiTabs = Tab(children = [capacityDemandTab,utilizationTab,profitMarginTab,dailyRatesTab, cashTab,earningsTab,revenueRiskTab])
+kpiTabs.set_title(0, 'Demand')
+kpiTabs.set_title(1, 'Utilization')
+kpiTabs.set_title(2, 'Profit Margin')
+kpiTabs.set_title(3, 'Daily Rates')
+kpiTabs.set_title(4,'Cash')
+kpiTabs.set_title(5, 'Earnings')
+kpiTabs.set_title(6, 'Revenue Risk')
+
+## Controls
+
+run_button = Button(description='Run')
+def on_run_clicked(b):
+   update_plots()
+
+run_button.on_click(on_run_clicked)
+
+
+
+## overall layout
+
+settingsBox = Accordion(children=[scenarioBox,projectsBox,consultantsBox],titles=('Scenario','Projects','Consultants'))
+
+layoutBox = VBox([
+    HTML(value="<h1>Settings</h1>"),
+    settingsBox,
+    HTML(value="<h1>Controls</h1>"),
+    run_button,
+    HTML(value="<h1>Results</h1>"),
+    HTML(value="<h2>Project Timeline</h2>"),
+    timeline,
+    HTML(value="<h2>Key Performance Indicators</h2>"),
+    HBox(children=[utilizationStatbox,dailyRateStatbox,profitMarginStatbox,revenueStatbox,earningsStatbox],layout=Layout(width='100%',margin='30px')),
+    kpiTabs])
+
+display(layoutBox)
+
+# run the scenario
+
+update_plots()
